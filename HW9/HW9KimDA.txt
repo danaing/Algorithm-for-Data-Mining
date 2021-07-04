@@ -1,0 +1,191 @@
+###############################################
+##### HW9 : R code - Danah Kim 2018314030 #####
+###############################################
+# Generate a training sample of size 1000
+# train set 1000
+set.seed(1234)
+a1 = matrix(c(2, 2),nrow=2)
+a2 = matrix(c(3, -3),nrow=2)
+X1 = rnorm(1000, 0, 1)
+X2 = rnorm(1000, 0, 1)
+X = rbind(X1, X2)
+Z = rnorm(1000, 0, 1)
+sigmoid = function(x){1/(1+exp(-x))}
+Y = c(sigmoid(t(a1)%*%X) + (t(a2)%*%X)^2 + 0.3*Z)
+train = data.frame(X1,X2,Y)
+head(train)
+
+# test set 1000
+set.seed(5678)
+a1 = matrix(c(2, 2),nrow=2)
+a2 = matrix(c(3, -3),nrow=2)
+X1 = rnorm(1000, 0, 1)
+X2 = rnorm(1000, 0, 1)
+X = rbind(X1, X2)
+Z = rnorm(1000, 0, 1)
+sigmoid = function(x){1/(1+exp(-x))}
+Y = c(sigmoid(t(a1)%*%X) + (t(a2)%*%X)^2 + 0.3*Z)
+test = data.frame(X1,X2,Y)
+head(test)
+
+## a. Plot the surface of responses
+#install.packages('rgl')
+require(rgl)
+
+X1 = seq(from=-3, to=3, length.out = 100)
+X2 = seq(from=-3, to=3, length.out = 100)
+a1 = matrix(c(2, 2),nrow=2)
+a2 = matrix(c(3, -3),nrow=2)
+
+Y = function(x,y) {
+  X = rbind(x, y)
+  sigmoid(t(a1)%*%X) + (t(a2)%*%X)^2 
+}
+
+Z <- outer(X1, X2, Y)
+
+persp3d(X1, X2, Z, theta=50, phi=25, expand=0.75, col='blue',
+        ticktype="detailed", xlab="X1", ylab="X2", zlab="Response",axes=TRUE)
+surface3d(X1, X2, Z, back = "lines")
+surface3d(X1, X2, Z, front = "lines")
+
+
+## Neural network analysis using nnet 
+#install.packages('nnet')
+library(nnet)
+#install.packages('devtools')
+library(devtools)
+source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
+library(reshape2)
+
+# hidden nodes from 1 to 10
+train_error = c()
+test_error = c()
+
+for (i in 1:10) {
+  nn <- nnet(Y~., data=train, size=i, linout = TRUE)
+  print(summary(nn))
+  
+  #### validation
+  # train
+  pred <- predict(nn, train[,-3])
+  train_error[i] = sum((train$Y-pred)^2)/length(pred)
+  
+  # test
+  pred_t <- predict(nn, test[,-3])
+  test_error[i] = sum((test$Y-pred_t)^2)/length(pred_t)
+}
+
+## plot the error curves 
+plot(train_error, type = 'o', col='blue', ylab='Error', xlab='the number of hidden node')
+lines(test_error, col='red', type='o', lty = 2)
+legend('topright', c('train set', 'test set'), col = c('blue', 'red'), lty = c(1,2))
+
+
+
+
+
+
+
+####################################################
+##### HW9 : Python code - Danah Kim 2018314030 #####
+####################################################
+
+
+import numpy as np
+import pandas as pd
+from pandas import DataFrame as df
+
+def sigmoid (x) :
+    return (1 / (1 +np.exp(-x)) )
+
+# train set
+np.random.seed(1234)
+X1 = np.random.normal(size=1000)
+X2 = np.random.normal(size=1000)
+Z = np.random.normal(size=1000)
+a1 = np.array([2,2])
+a2 = np.array([3,-3])
+X = np.c_[X1, X2].T
+Y = sigmoid(np.dot(a1.T, X)) + np.dot(a2.T, X)**2 + 0.3*Z
+train = df({'X1' : X1, 'X2' : X2, 'Y' : Y})
+
+# test set
+np.random.seed(5678)
+X1 = np.random.normal(size=1000)
+X2 = np.random.normal(size=1000)
+Z = np.random.normal(size=1000)
+a1 = np.array([2,2])
+a2 = np.array([3,-3])
+X = np.c_[X1, X2].T
+Y = sigmoid(np.dot(a1.T, X)) + np.dot(a2.T, X)**2 + 0.3*Z
+test = df({'X1' : X1, 'X2' : X2, 'Y' : Y})
+
+### Plot the surface of response 
+from matplotlib import cm
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+X1 = X2 = np.arange(-3.0, 3.0, 0.05)
+a1 = np.array([2,2])
+a2 = np.array([3,-3])
+
+xss, yss = np.meshgrid(X1, X2)
+
+def fun(x, y) :
+    a1 = np.array([2,2])
+    a2 = np.array([3,-3])
+    X = np.c_[x, y].T
+    return sigmoid(np.dot(a1.T, X)) + np.dot(a2.T, X)**2
+
+zs = np.array([fun(x,y) for x,y in zip(np.ravel(xss), np.ravel(yss))])
+Z = zs.reshape(120,120)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(xss, yss, Z)
+ax.set_xlabel('X1')
+ax.set_ylabel('X2')
+ax.set_zlabel('Response')
+
+plt.show()
+
+
+### Neural Network analysis usging scikit learn package
+import pandas as pd
+import numpy as np
+from sklearn import model_selection
+from sklearn import metrics
+import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPRegressor
+
+x_train, x_test, y_train, y_test = train[['X1','X2']], test[['X1','X2']], train['Y'], test['Y']
+
+#estimator = MLPRegressor()
+train_error = []
+test_error = []
+
+for i in range(1, 11) :
+    print('Hidden node : ',i,)
+    estimator = MLPRegressor(hidden_layer_sizes=(i,), max_iter=100000)
+    estimator.fit(x_train, y_train)
+    # train error
+    y_predict = estimator.predict(x_train)
+    train_error_tmp = sum( (y_predict - y_train)**2/len(y_train))
+    print('train error : ', train_error_tmp)
+    train_error.append(train_error_tmp)
+    # test error    
+    y_predict_t = estimator.predict(x_test)
+    test_error_tmp = sum( (y_predict_t - y_test)**2/len(y_test))
+    print('test error : ', test_error_tmp)
+    test_error.append(test_error_tmp)
+
+
+plt.title('Error Curves of train and test set')
+n = np.arange(1,11,1)
+plt.plot(n, train_error, 'bo--', label='train set')
+plt.plot(n, test_error, 'ro--', label='test set')
+plt.xlabel('the number of hidden nodes')
+plt.ylabel('Error (MSE)')
+plt.legend(loc='upper right')
+plt.show()

@@ -1,0 +1,39 @@
+ID, Actual class, LDA-nobagging pred
+-----------------------------
+1, 1, 1
+2, 1, 2
+3, 1, 4
+(continue)
+
+Confusion Matrix (LDA - no bagging)
+----------------------------------
+            Predicted Class
+Actual Class  1  2  3  4
+           1 49 28  4  4
+           2 26 42  9  8
+           3  0  0 85  1
+           4  0  0  2 77
+
+Model Summary (LDA - no bagging)
+------------------------------
+Overall accuracy: 0.755
+
+ID, Actual class, LDA-bagging pred
+-----------------------------
+1, 1, 1
+2, 1, 2
+3, 1, 4
+(continue)
+
+Confusion Matrix (LDA - bagging)
+----------------------------------
+            Predicted Class
+Actual Class  1  2  3  4
+           1 50 27  4  4
+           2 23 44 10  8
+           3  0  0 85  1
+           4  0  1  2 76
+
+Model Summary (LDA - bagging)
+------------------------------
+Overall accuracy: 0.761
